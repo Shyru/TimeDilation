@@ -3,6 +3,7 @@ TimeDilation/TimeMachine - mocking time() for PHPUnit
 
 TimeDilation/TimeMachine helps you when you need to test time()-constrained code in PHPUnit.
 
+[![Build Status](https://travis-ci.org/Shyru/TimeDilation.png)](https://travis-ci.org/Shyru/TimeDilation)
 
 Usage
 -----
