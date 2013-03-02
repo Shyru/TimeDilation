@@ -47,9 +47,12 @@ class TimeMachine
 	static function setNow($_now,$_milliSeconds=0)
 	{
 		self::$timeAnchor=\microtime(true);
-		self::$milliSeconds=$_milliSeconds;
-		if (is_string($_now)) self::$now=\strtotime($_now);
-		else self::$now=$_now;
+		if (is_string($_now))
+		{
+			self::$now=\strtotime($_now);
+			self::$now+=$_milliSeconds/1000;
+		}
+		else self::$now=$_now+$_milliSeconds/1000;
 	}
 
 	/**
@@ -92,7 +95,7 @@ class TimeMachine
 	/**
 	 * Handy method to fast-forward the time the given \c $_seconds.
 	 *
-	 * @param int $_seconds How many seconds to fast forward.
+	 * @param float $_seconds How many seconds to fast forward.
 	 */
 	static function fastForward($_seconds)
 	{
@@ -117,10 +120,25 @@ class TimeMachine
 
 	static function microtime($_asFloat=false)
 	{
-
-		$mt=(float)\TimeDilation\TimeMachine::now()+(float)\TimeDilation\TimeMachine::milliSeconds()/1000;
-		echo "infected microtime() called: $mt\n";
-		return $mt;
+		if ($_asFloat==true)
+		{
+			if (self::$timeAnchor)
+			{ //calculate relative time
+				$timePassed=\microtime(true)-self::$timeAnchor;
+				return self::$now+$timePassed;
+			}
+			else
+			{
+				$mt=(float)\TimeDilation\TimeMachine::now();
+				echo "infected microtime() called: $mt\n";
+				return $mt;
+			}
+		}
+		else
+		{ //we have to return the microtime as string
+			$mt=self::microtime(true);
+			return implode(" ",array_reverse(explode(".",$mt)));
+		}
 
 	}
 }
