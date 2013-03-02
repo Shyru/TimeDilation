@@ -1,0 +1,7 @@
+<phpunit>
+    <testsuites>
+        <testsuite name="TimeDilation TestSuite">
+            <directory>tests/TimeDilation/</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

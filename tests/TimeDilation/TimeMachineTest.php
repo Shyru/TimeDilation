@@ -47,15 +47,14 @@ class TimeMachineTest extends \PHPUnit_Framework_TestCase
 		TimeMachine::setNow($now,200);
 		$this->assertEquals($unix+0.2,round(microtime(true),3));
 
-		usleep(200*1000+100);
-		$this->assertEquals($unix+0.4,round(microtime(true),3));
+		usleep(200*1000+200);
+		$this->assertEquals($unix+0.4,round(microtime(true),2));
 	}
 
 	function testFastMilliseconds()
 	{
 		$now="2028-08-29 17:28:49";
 		TimeMachine::setNow($now,200);
-		var_dump(microtime(true));
 		TimeMachine::fastForward(0.2);
 		$mt=microtime(true);
 		$ms=$mt-(int)$mt;
