@@ -19,8 +19,8 @@ namespace TimeDilation;
 class TimeMachine
 {
 	static private $now=null;
-	static private $milliSeconds=0;
 	static private $timeAnchor=0;
+	static private $frozen=false;
 
 	/**
 	 * Infect the given namespace so that all calls within that namespace
@@ -42,17 +42,22 @@ class TimeMachine
 	/**
 	 * Allows to set now.
 	 *
-	 * @param mixed $_now This can either be a string that is parsable with strtotime() or a unix timestamp.
+	 * @param mixed $_now This can either be a string that is parsable with strtotime() or a unix timestamp or a float as from microtime(true)
+	 * @param int $_milliSeconds The milliseconds of \c $_now. This is especially useful if you want to set the time with a string and also set the milliseconds with one call.
 	 */
 	static function setNow($_now,$_milliSeconds=0)
 	{
-		self::$timeAnchor=\microtime(true);
+		if (!self::$frozen) self::$timeAnchor=\microtime(true);
 		if (is_string($_now))
 		{
-			self::$now=\strtotime($_now);
+			self::$now=(double)\strtotime($_now);
 			self::$now+=$_milliSeconds/1000;
 		}
-		else self::$now=$_now+$_milliSeconds/1000;
+		else if (is_double($_now))
+		{
+			self::$now=$_now;
+		}
+		else self::$now=(double)$_now+$_milliSeconds/1000;
 	}
 
 	/**
@@ -74,23 +79,42 @@ class TimeMachine
 		}
 	}
 
+	/**
+	 * Resets the TimeMachine.
+	 * After a call to this method all methods should work as expected again.
+	 */
+	static function reset()
+	{
+		self::$now=null;
+		self::$timeAnchor=0;
+		self::$frozen=false;
+	}
+
 
 	/**
 	 * Freezes the time.
-	 *
+	 * After a call to this method no time will pass anymore, regardless how long you
+	 * sleep() or usleep().
+	 * To get the time running again, use unfreeze().
 	 */
 	static function freeze()
 	{
 		self::$now=self::now();
 		self::$timeAnchor=0;
+		self::$frozen=true;
 	}
 
-
-	static function milliSeconds()
+	/**
+	 * Unfreezes the time.
+	 * This means time is running again after having called freeze() before.
+	 */
+	static function unfreeze()
 	{
-		$microtime=\microtime(true)."";
-		return (int)\substr($microtime,\strpos(".",$microtime));
+		self::$timeAnchor=\microtime(true);
+		self::$frozen=false;
 	}
+
+
 
 	/**
 	 * Handy method to fast-forward the time the given \c $_seconds.
@@ -102,7 +126,25 @@ class TimeMachine
 		self::$now+=$_seconds;
 	}
 
+	/**
+	 * Handy method to rewind time the given \c $_seconds.
+	 *
+	 * @param float $_seconds How many seconds to rewind.
+	 */
+	static function rewind($_seconds)
+	{
+		self::$now-=$_seconds;
+	}
 
+
+	/**
+	 * Replacement for php's native date() method.
+	 * Should work exactly as phps date() but be constrained to the time-machine.
+	 *
+	 * @param $_format
+	 * @param $_now
+	 * @return string
+	 */
 	static function date($_format,$_now)
 	{
 		$now=$_now;
@@ -110,14 +152,28 @@ class TimeMachine
 		return \date($_format,$now);
 	}
 
+	/**
+	 * Replacement for php's native strtotime() method.
+	 * Should work exactly as phps strtotime() but be constrained to the time-machine.
+	 *
+	 * @param $_time
+	 * @param null $_now
+	 * @return int
+	 */
 	static function strtotime($_time,$_now=null)
 	{
 		$now=$_now;
 		if (!$_now) $now=self::now();
 		return \strtotime($_time,$now);
-
 	}
 
+	/**
+	 * Replacement for php's native microtime() method.
+	 * Should work exaclty as php's microtime() but be constrained to the time-machine.
+	 *
+	 * @param bool $_asFloat
+	 * @return float|null|string
+	 */
 	static function microtime($_asFloat=false)
 	{
 		if ($_asFloat==true)
@@ -130,16 +186,17 @@ class TimeMachine
 			else
 			{
 				$mt=(float)\TimeDilation\TimeMachine::now();
-				echo "infected microtime() called: $mt\n";
 				return $mt;
 			}
 		}
 		else
 		{ //we have to return the microtime as string
-			$mt=self::microtime(true);
-			return implode(" ",array_reverse(explode(".",$mt)));
-		}
+			$mt=explode(".",self::microtime(true));
+			if (!isset($mt[1])) return "0.0 $mt[0]";
 
+			$fraction=str_pad("0.".$mt[1],10,"0");
+			return $fraction." ".$mt[0];
+		}
 	}
 }
 
