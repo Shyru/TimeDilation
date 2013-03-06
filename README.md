@@ -35,6 +35,7 @@ class TestTime extends PHPUnit_Framework_TestCase
 
 Testing a class that uses time():
 ```php
+
 namespace IO\Util;
 
 /**
@@ -43,55 +44,56 @@ namespace IO\Util;
  */
 class Buffer
 {
-   private $bufferTime;
-   private $buffer;
-   private $callbacks;
-   private $lastFlush;
-   
-   /**
-    * Constructs a new buffer.
-    * 
-    * @param int $_bufferTime The buffer time in seconds.
-    */
-   function __construct($_bufferTime=10)
-   {
-      $this->bufferTime=$_bufferTime;
-      $this->lastFlush=time();
-   }
+    private $bufferTime;
+    private $buffer;
+    private $callbacks;
+    private $lastFlush;
 
-   /**
-    * Registers a new consumer callback that should be called
-    * whenever at least 10 seconds passed since the last time the data was flushed.
-    *
-    * @param callable $_callback The callback that should be called to receive the flushed data
-    */
-   function registerConsumer($_callback)
-   {
-      $this->callbacks[]=$_callback;
-   }
-   
-   /**
-    * Append some data to the buffer.
-    * If the last flush of data was more then bufferTime seconds ago, the buffer will be flushed to all registered
-    * consumers.
-    * 
-    * @param mixed $_data The data that should be buffered.
-    */
-   function append($_data)
-   {
-      $this->buffer[]=$_data;
-      if (time()+$this->bufferTime>$this->lastFlush)
-      { //at least 10 seconds passed since the last flush, now flush our buffer
-         foreach ($this->callbacks as $callback)
-         {
-            call_user_func($callback,$this->buffer);
-         }
-         $this->buffer=array();
-         $this->lastAdd=time();
-      }
-   }
+    /**
+     * Constructs a new buffer.
+     *
+     * @param int $_bufferTime The buffer time in seconds.
+     */
+    function __construct($_bufferTime=10)
+    {
+        $this->bufferTime=$_bufferTime;
+        $this->lastFlush=time();
+    }
+
+    /**
+     * Registers a new consumer callback that should be called
+     * whenever at least 10 seconds passed since the last time the data was flushed.
+     *
+     * @param callable $_callback The callback that should be called to receive the flushed data
+     */
+    function registerConsumer($_callback)
+    {
+        $this->callbacks[]=$_callback;
+    }
+
+    /**
+     * Append some data to the buffer.
+     * If the last flush of data was more then bufferTime seconds ago, the buffer will be flushed to all registered
+     * consumers.
+     *
+     * @param mixed $_data The data that should be buffered.
+     */
+    function append($_data)
+    {
+        $this->buffer[]=$_data;
+        if ($this->lastFlush+$this->bufferTime<time())
+        { //at least 10 seconds passed since the last flush, now flush our buffer
+            foreach ($this->callbacks as $callback)
+            {
+                call_user_func($callback,$this->buffer);
+            }
+            $this->buffer=array();
+            $this->lastFlush=time();
+        }
+    }
 
 }
+
 
 ```
 If you wanted to write a Unit-Test for the above Buffer class the Unit-Test would at least take a second to complete because
@@ -100,31 +102,33 @@ essentially just waiting. With TimeDilation/TimeMachine the class could be teste
 ```php
 namespace TimeDilation;
 
-TimeMachine::infectNamespace("IO\Util"); //infect the namespace so that we can control time
+TimeMachine::infectNamespace("IO\\Util"); //infect the namespace so that we can control time
+require_once(__DIR__."/Buffer.php");
 
-class BufferTest extends PHPUnit_Framework_TestCase
+class BufferTest extends \PHPUnit_Framework_TestCase
 {
-   
-   function testAppendAndFlushing()
-   {
-      $flushedData=array();
-      $buffer=new IO\Util\Buffer();
-      $buffer->registerConsumer(function($_data) use $flusehdData {
-         $flushedData=$_data;
-      });
-      
-      $buffer->append("TimeMachine");
-      TimeMachine::fastForward(4); //fast forward time by 4 seconds
-      $buffer->append("rocks");
-      TimeMachine::fastForward(7); //fast forward time by 7 seconds
-      $buffer->append("the world!");
-      //since we forwarded time more than 10 seconds our consumer should now have been called,
-      //lets check this
-      $this->assertEquals(3,count($flushedData));
-      $this->assertEquals("TimeMachine",$flushedData[0]);
-      $this->assertEquals("rocks",$flushedData[1]);
-      $this->assertEquals("the world!",$flushedData[2]);
-   }
+
+    function testAppendAndFlushing()
+    {
+        $flushContainer=new \stdClass;
+        $flushContainer->data=array();
+        $buffer=new \IO\Util\Buffer();
+        $buffer->registerConsumer(function($_data) use ($flushContainer) {
+            $flushContainer->data=$_data;
+        });
+
+        $buffer->append("TimeMachine");
+        TimeMachine::fastForward(4); //fast forward time by 4 seconds
+        $buffer->append("rocks");
+        TimeMachine::fastForward(7); //fast forward time by 7 seconds
+        $buffer->append("the world!");
+        //since we forwarded time more than 10 seconds our consumer should now have been called,
+        //lets check this
+        $this->assertEquals(3,count($flushContainer->data));
+        $this->assertEquals("TimeMachine",$flushContainer->data[0]);
+        $this->assertEquals("rocks",$flushContainer->data[1]);
+        $this->assertEquals("the world!",$flushContainer->data[2]);
+    }
 }
 
 ```

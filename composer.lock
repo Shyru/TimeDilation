@@ -1,5 +1,5 @@
 {
-    "hash": "eec40912915cb09f65796bd2b3f3466c",
+    "hash": "0e21f8e1e3a36c79662832c855aa07ec",
     "packages": [
 
     ],
@@ -237,16 +237,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "3.7.15",
+            "version": "3.7.16",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "3.7.15"
+                "reference": "3.7.16"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/3.7.15",
-                "reference": "3.7.15",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/3.7.16",
+                "reference": "3.7.16",
                 "shasum": ""
             },
             "require": {
@@ -307,7 +307,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2013-03-01 11:55:06"
+            "time": "2013-03-06 11:07:01"
         },
         {
             "name": "phpunit/phpunit-mock-objects",
@@ -411,6 +411,12 @@
     ],
     "minimum-stability": "stable",
     "stability-flags": [
+
+    ],
+    "platform": {
+        "php": ">=5.3.0"
+    },
+    "platform-dev": [
 
     ]
 }

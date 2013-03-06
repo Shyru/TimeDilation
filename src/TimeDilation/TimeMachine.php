@@ -123,6 +123,12 @@ class TimeMachine
 	 */
 	static function fastForward($_seconds)
 	{
+        if (!self::$timeAnchor)
+        {
+            self::$timeAnchor=\microtime(true);
+            self::$now=time();
+        }
+
 		self::$now+=$_seconds;
 	}
 
