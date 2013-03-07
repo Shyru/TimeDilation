@@ -11,6 +11,8 @@
 
 namespace TimeDilation;
 
+require_once(__DIR__."/../../../src/TimeDilation/TimeMachine.php");
+
 TimeMachine::infectNamespace("IO\\Util"); //infect the namespace so that we can control time
 require_once(__DIR__."/Buffer.php");
 
